@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Truck World 3D</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+// Cámara
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+// Render
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Luz
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10, 20, 10);
+scene.add(light);
+
+// Suelo infinito
+const roadGeometry = new THREE.PlaneGeometry(50, 2000);
+const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+const road = new THREE.Mesh(roadGeometry, roadMaterial);
+road.rotation.x = -Math.PI / 2;
+scene.add(road);
+
+// Camión
+const truckGeometry = new THREE.BoxGeometry(2, 2, 4);
+const truckMaterial = new THREE.MeshStandardMaterial({ color: 0x0055ff });
+const truck = new THREE.Mesh(truckGeometry, truckMaterial);
+truck.position.y = 1;
+scene.add(truck);
+
+let speed = 0;
+let maxSpeed = 1;
+let fuel = 100;
+
+// Controles
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function updateTruck() {
+  if (keys["ArrowUp"] && fuel > 0) {
+    speed += 0.01;
+    fuel -= 0.02;
+  }
+  if (keys["ArrowDown"]) speed -= 0.02;
+
+  speed *= 0.98; // fricción
+
+  if (speed > maxSpeed) speed = maxSpeed;
+  if (speed < -0.5) speed = -0.5;
+
+  if (keys["ArrowLeft"]) truck.position.x -= 0.1;
+  if (keys["ArrowRight"]) truck.position.x += 0.1;
+
+  truck.position.z -= speed;
+}
+
+// Cámara sigue al camión
+function updateCamera() {
+  camera.position.x = truck.position.x;
+  camera.position.y = 5;
+  camera.position.z = truck.position.z + 10;
+  camera.lookAt(truck.position);
+}
+
+// Ciclo día/noche
+let time = 0;
+function updateDayNight() {
+  time += 0.001;
+  const intensity = Math.abs(Math.sin(time));
+  light.intensity = intensity;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  updateTruck();
+  updateCamera();
+  updateDayNight();
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+
+</body>
+</html>
